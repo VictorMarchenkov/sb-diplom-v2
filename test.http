@@ -1,0 +1,20 @@
+GET http://127.0.0.1:8282/api
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8383/mms
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8383/support
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8383/accendent
+Accept: application/json
+
+###
+

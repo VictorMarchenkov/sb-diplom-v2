@@ -1,0 +1,1 @@
+bind\app\sbdiplom.exe

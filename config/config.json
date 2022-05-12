@@ -1,0 +1,16 @@
+{
+  "csv": {
+    "sms": "generator/sms.data",
+    "voice": "generator/voice.data",
+    "email": "generator/email.data",
+    "billing": "generator/billing.data"
+  },
+  "httpreq": {
+    "server_port": 8282,
+    "service_port": 8383,
+    "status": "/info",
+    "mms": "/mms",
+    "support": "/support",
+    "incident": "/accendent"
+  }
+}

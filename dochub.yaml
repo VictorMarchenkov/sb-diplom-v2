@@ -1,0 +1,193 @@
+#******************************************************************************
+# Привет!
+#
+# Меня зовут Роман Пионтик. Я задумал этот инструмент, чтобы сделать нашу
+# с тобой жизнь чуточку проще. Давай я тебе быстро все здесь покажу на примере
+# простой архитектуры.
+#******************************************************************************
+
+# Здесь можно подключить репозитории архитектуры
+imports:
+#  - https://dochub.info/documentation/root.yaml  # по прямой ссылке (попробуй раскомментировать и посмотри на результат)
+#  - foo.yaml                                     # или по относительному пути
+
+# Это аспекты. Аспекты - аналитические маркеры, позволяющие выделять
+# сегменты архитектуры. Кликни на лупе слева и посмотри как они помогают
+# найти то, что нужно.
+aspects:
+  auth:                       # Идентификатор аспекта
+    title: Автризация         # Название
+    location: Авторизация     # Размещение в меню
+  goods:
+    title: Покупка товара
+    location: Покупка товара
+  goods.order:                # Структурированные идентификаторы аспектов определяют их иерархию
+    title: Заказ товара
+    location: Покупка товара/Заказ
+  goods.payment:
+    title: Оплата товара
+    location: Покупка товара/Оплата
+
+# Архитектурные компоненты. Из них строится ИТ архитектура.
+components:
+
+  # Компоненты верхнего уровня (L1 C4Model)
+  user:                       # Идентификатор компонента
+    title: Пользователь       # Название
+    entity: actor             # Представление на схеме
+    links:                    # Компоненты с которым происходит взаимодействие
+      - id: system            # Идентификатор компонента
+        direction: <-->       # Направление взаимодействия (<-- | -- | --> | <-->)
+        title: Покупка        # Смысл взаимодействия
+  system:
+    title: Система
+    entity: collections
+    aspects:                  # Аспекты, которые реализует компонент
+      - auth
+      - goods
+  # Внутренняя архитектура компонентов верхнего уровня (L2 C4Model)
+  system.gateway:             # Иерархия компонентов определяется структурой их идентификаторов
+    title: API шлюз
+    entity: component
+    links:
+      - id: system.backend
+        title: Бизнес API
+        direction: <-->
+        contract: https://editor.swagger.io/  # Можно указать контракт взаимодействия внешней ссылкой
+      - id: system.auth
+        title: Auth API
+        direction: <-->
+        contract: example                     # Или, контракт можно указывать идентификатором документа
+    technologies:             # Технологии используемые в компоненте
+      - HTTP
+      - OAuth
+  system.backend:
+    title: Бэкенд
+    entity: component
+    links:
+      - id: system.db
+        direction: <-->
+    aspects:
+      - goods.order
+      - goods.payment
+    technologies:
+      - PHP
+      - Laravel
+
+  # Детальная архитектура бэкенда (L3 C4Model)
+  system.backend.core:
+    title: Ядро
+    entity: component
+  system.backend.log:
+    title: Подсистема логирования
+    entity: component
+  system.backend.business:
+    title: Бизнес-логика
+    entity: component
+
+  system.auth:
+    title: Авторизация
+    entity: component
+    aspects:
+      - auth
+    links:
+      - id: system.db
+        direction: <-->
+    technologies:
+      - Go
+      - OAuth
+
+  system.db:
+    title: Харнилища
+    entity: database
+  system.db.business:
+    title: Данные
+    entity: database
+    technologies:
+      - PostgreSQL
+  system.db.users:
+    title: Пользователи
+    entity: database
+    technologies:
+      - PostgreSQL
+
+# Диаграммы представлений
+contexts:
+  overview:                   # Схема верхнего уровня представления (L1 C4Model)
+    title: Обзор              # Название диаграммы
+    location: Пример          # Размещение диаграммы в меню
+    components:               # Компоненты, которые входят в диаграмму
+      - system                # В данной диаграмме будет только один компонент
+      - user
+  system:                     # Архитектура системы (L2 C4Model)
+    title: Устройство системы
+    location: Пример/Система
+    components:
+      - system.*              # Можно указать wildcard включаемых компонентов в диаграмму
+  system.backend:             # Архитектура бэкенда (L3 C4Model)
+    title: Устройство бэкенда
+    location: Пример/Система/Бэкенд
+    components:
+      - system.backend.*
+
+# Документы
+docs:
+  example:
+    location: Пример документа  # Размещение в меню
+    # Ссылка может быть как на внешний ресурс, так на файл по относительному пути
+    source: https://dochub.info/documentation/docs/manual/docs/examples/example.yaml
+    type: openapi               # Тип документа (OpenApi | Markdown | PlantUML | Table)
+
+# Описание технологического стека
+technologies:
+  sections:                           # Определение разделов стека
+    language:                         # Идентификатор раздела
+      title: Языки программирования   # Название раздела
+    frameforks:
+      title: Фреймворки
+    databaeses:
+      title: Базы данных
+    storages:
+      title: Хранилища
+    protocols:
+      title: Протоколы
+  items:                              # Перечисление технологий
+    PHP:                              # Идентификатор технологии
+      aliases:                        # Синонимы технологии
+        - пыха
+      title: Супер-крутой язык программирования   # Название технологии
+      link: https://www.php.net/                  # Ссылка на документацию
+      section: language               # Идентификатор секции технологии
+      status: adopt                   # Статус технологии adopt / trial / assess / hold
+    Go:
+      title: Go
+      link: https://go.dev/
+      section: language
+      status: trial
+    Laravel:
+      title: Laravel
+      link: https://laravel.ru/
+      section: frameforks
+      status: trial
+    PostgreSQL:
+      title: PostgreSQL
+      link: https://www.postgresql.org/
+      section: databaeses
+      status: assess
+    HTTP:
+      title: HTTP
+      link: https://ru.wikipedia.org/wiki/HTTP
+      section: protocols
+      status: adopt
+    OAuth:
+      title: OAuth
+      link: https://ru.wikipedia.org/wiki/OAuth
+      section: protocols
+      status: adopt
+
+#******************************************************************************
+#                          Теперь ты почти все знаешь!
+#                    подробности на сайте https://dochub.info
+#    Если появятся вопросы, нужна будет помощь или ты захочешь сделать свой
+#           вклад в проект иди сюда - https://github.com/RabotaRu/DocHub
+#******************************************************************************
