@@ -12,3 +12,5 @@
 API - можно наблюдать по адресу: [localhost:8282/api](localhost:8282/api).
 
 STATUS - можно наблюдать по адресу: [localhost:8282/info](localhost:8282/info)
+
+PRESENTATION - можно видеть по адресу [localhost:8282/presentation](localhost:8282/presentation)
