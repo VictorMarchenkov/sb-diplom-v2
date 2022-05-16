@@ -1,3 +1,4 @@
+// Package internal All entities of the project
 package internal
 
 // CSV

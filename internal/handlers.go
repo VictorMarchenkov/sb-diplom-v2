@@ -1,3 +1,4 @@
+// Package internal  handlers to treat files and http queries
 package internal
 
 import (
@@ -17,7 +18,7 @@ var (
 	errFetchUrl = ""
 )
 
-// HandlerHTTP method for treating http queries.
+// HandlerHTTP method of StatusResult for treating http queries.
 func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 	t.Status = true
 
@@ -50,7 +51,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
-// HandlerFiles  method for treating files.
+// HandlerFiles method of StatusResult for treating files.
 func (t *StatusResult) HandlerFiles(cfg Config) {
 	var err error
 
