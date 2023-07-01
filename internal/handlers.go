@@ -100,7 +100,7 @@ func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]MMSData, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		logger.Logger.Errorf("error parse url: %s", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return [][]MMSData{}, nil
 	}
 	//	w.WriteHeader(200)
@@ -156,7 +156,7 @@ func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error
 	res, err := http.Get(url)
 	if err != nil {
 		logger.Logger.Errorf("error parse url: %s", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return []int{}, nil
 	}
 
@@ -166,7 +166,7 @@ func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error
 		return []int{}, nil
 	}
 	if err := json.Unmarshal(resu, &result); err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		logger.Logger.Errorf("error on decoding JSON response for support service: %s", err)
 		return []int{}, nil
 	}
@@ -204,20 +204,20 @@ func GetIncidentData(w http.ResponseWriter, r *http.Request) ([]IncidentData, er
 
 	res, err := http.Get(url)
 	if err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		logger.Logger.Errorf("error parse url: %s", err)
 		return []IncidentData{}, nil //[]IncidentData{}, nil
 	}
 
 	rr, err := io.ReadAll(res.Body)
 	if err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		logger.Logger.Errorf("error on response body for insident service:%s", err)
 		return []IncidentData{}, nil
 	}
 
 	if err := json.Unmarshal(rr, &result); err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		logger.Logger.Errorf("error on decoding JSON response for insident service: %s", err)
 		return []IncidentData{}, nil
 	}

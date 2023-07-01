@@ -33,6 +33,7 @@ func Run(port int) {
 	start := fmt.Sprintf(":%d", port)
 	data, err := ioutil.ReadFile("config/config.json")
 	if err != nil {
+		// TODO: change fatal on error
 		log.Fatal(err.Error())
 	}
 
@@ -68,6 +69,7 @@ func Run(port int) {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			// TODO: dekete fatal
 			logger.Logger.Fatalf("listen error %v\n", err)
 		}
 	}()
