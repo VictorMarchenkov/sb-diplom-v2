@@ -4,23 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-co-op/gocron"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	cfg "sb-diplom-v2/internal"
-	"sb-diplom-v2/internal/logger"
-	_ "sb-diplom-v2/internal/logger"
-	"sb-diplom-v2/pkg"
 	"syscall"
 	"time"
+
+	cfg "sb-diplom-v2/internal"
+	"sb-diplom-v2/internal/logger"
+	"sb-diplom-v2/pkg"
+	cfg2 "sb-diplom-v2/pkg/cfg"
+
+	"github.com/go-co-op/gocron"
 )
 
 // Run presents the server logic
-func Run(port int) {
-
+func Run(cfgRoot *cfg2.Root) {
 	var cfg_ cfg.Config
 	var resultT cfg.StatusResult
 	var service = "skillbox diploma"
@@ -30,7 +31,7 @@ func Run(port int) {
 			logger.Logger.Warnf("Panic recovered after error: %v", err)
 		}
 	}()
-	start := fmt.Sprintf(":%d", port)
+	start := fmt.Sprintf(":%d", cfgRoot.HTTPServer.Port)
 	data, err := ioutil.ReadFile("config/config.json")
 	if err != nil {
 		log.Fatal(err.Error())
@@ -71,7 +72,7 @@ func Run(port int) {
 			logger.Logger.Fatalf("listen error %v\n", err)
 		}
 	}()
-	logger.Logger.Printf("%s starting on %d", service, port)
+	logger.Logger.Printf("%s starting on %d", service, cfgRoot.HTTPServer.Port)
 	<-stop
 
 	logger.Logger.Printf("%s shutting down ...", service)

@@ -12,5 +12,8 @@
     "mms": "/mms",
     "support": "/support",
     "incident": "/accendent"
+  },
+  "http_server": {
+    "port": 8383
   }
 }
