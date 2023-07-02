@@ -2,42 +2,27 @@ package app
 
 import (
 	"context"
-	"encoding/json"
+
 	"fmt"
 	"github.com/go-co-op/gocron"
-	"io/ioutil"
-	"log"
+
 	"net/http"
 	"os"
 	"os/signal"
 	cfg "sb-diplom-v2/internal"
-	"sb-diplom-v2/internal/logger"
-	_ "sb-diplom-v2/internal/logger"
 	"sb-diplom-v2/pkg"
+	cfg2 "sb-diplom-v2/pkg/cfg"
 	"syscall"
 	"time"
 )
 
 // Run presents the server logic
-func Run(port int) {
+func Run(cfgRoot *cfg2.Root) {
 
-	var cfg_ cfg.Config
 	var resultT cfg.StatusResult
 	var service = "skillbox diploma"
 
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Logger.Warnf("Panic recovered after error: %v", err)
-		}
-	}()
-	start := fmt.Sprintf(":%d", port)
-	data, err := ioutil.ReadFile("config/config.json")
-	if err != nil {
-		// TODO: change fatal on error
-		log.Fatal(err.Error())
-	}
-
-	json.Unmarshal(data, &cfg_)
+	start := fmt.Sprintf(":%d", cfgRoot.HTTPServer.Port)
 
 	mux := http.NewServeMux()
 	s := gocron.NewScheduler(time.UTC)
@@ -47,8 +32,8 @@ func Run(port int) {
 	mux.Handle("/info/", info)
 
 	s.Every("10s").Do(func() {
-		logger.Logger.Println("files rereading")
-		resultT.HandlerFiles(cfg_)
+		fmt.Println("files rereading")
+		resultT.HandlerFiles(cfgRoot.CSV)
 	})
 
 	s.StartAsync()
@@ -69,14 +54,14 @@ func Run(port int) {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			// TODO: dekete fatal
-			logger.Logger.Fatalf("listen error %v\n", err)
+			fmt.Printf("listen error %v\n", err)
+			os.Exit(1)
 		}
 	}()
-	logger.Logger.Printf("%s starting on %d", service, port)
+	fmt.Printf("%s starting on %d", service, cfgRoot.HTTPServer.Port)
 	<-stop
 
-	logger.Logger.Printf("%s shutting down ...", service)
+	fmt.Printf("%s shutting down ...", service)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
@@ -84,6 +69,6 @@ func Run(port int) {
 	}()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Logger.Errorf("Server Shutdown Failed:%+v", err)
+		fmt.Errorf("Server Shutdown Failed:%+v", err)
 	}
 }

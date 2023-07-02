@@ -1,16 +1,16 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 )
 
 // GetConfig reading config file.
-func GetConfig() []byte {
+func GetConfig() ([]byte, error) {
 	rawConfig, err := ioutil.ReadFile("config/config.json")
 	if err != nil {
-		log.Println(err.Error())
-		//log.Fatal(err.Error())
+		fmt.Println("error opening config filr: ", err.Error())
+		return nil, err
 	}
-	return rawConfig
+	return rawConfig, nil
 }

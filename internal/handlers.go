@@ -26,7 +26,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("error when reading mms data: %v", err)
+		fmt.Println("error when reading mms data: %v", err)
 	}
 	t.Data.MMS = MMS
 
@@ -34,7 +34,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("error when reading incidents data: %v", err)
+		fmt.Printf("error when reading incidents data: %v", err)
 	}
 	t.Data.Incident = INCIDENT
 
@@ -42,7 +42,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("error when reading support service data: %v", err)
+		fmt.Printf("error when reading support service data: %v", err)
 	}
 	t.Data.Support = SUPPORT
 
@@ -52,7 +52,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandlerFiles method of StatusResult for treating files.
-func (t *StatusResult) HandlerFiles(cfg Config) {
+func (t *StatusResult) HandlerFiles(cfg interface{}) {
 	var err error
 
 	t.Data.SMS, err = GetSmsData(cfg.CSV.Sms)
@@ -60,27 +60,27 @@ func (t *StatusResult) HandlerFiles(cfg Config) {
 		logger.Logger.Errorf("%s", err)
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("%s", err)
+		fmt.Printf("%s", err)
 	}
 	t.Data.VoiceCall, err = GetVoiceService(cfg.CSV.Voice)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("%s", err)
+		fmt.Printf("%s", err)
 
 	}
 	t.Data.Email, err = GetEmailServiceData(cfg.CSV.Email)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("%s", err)
+		fmt.Printf("%s", err)
 
 	}
 	t.Data.Billing, err = GetBillingServiceData(cfg.CSV.Billing)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		logger.Logger.Errorf("%s", err)
+		fmt.Printf("%s", err)
 	}
 }
 
@@ -93,32 +93,36 @@ func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]MMSData, error) {
 		sortedResult [][]MMSData
 	)
 
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return nil, err
+	}
 	json.Unmarshal(cfg, &confT)
 	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTP.ServicePort, confT.HTTP.Mms)
 
 	res, err := http.Get(url)
 	if err != nil {
-		logger.Logger.Errorf("error parse url: %s", err)
+		fmt.Printf("error parse %s: %v", url, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return [][]MMSData{}, nil
 	}
 	//	w.WriteHeader(200)
 	rr, err := io.ReadAll(res.Body)
 	if err != nil {
-		logger.Logger.Errorf("error on response body for MMS service: %s", err)
+		fmt.Printf("error on response body for MMS service: %v", err)
 		return [][]MMSData{}, nil
 	}
 
 	if err := json.Unmarshal(rr, &tmpResult); err != nil {
-		logger.Logger.Errorf("error on decoding JSON response for MMS service: %s", err)
+		fmt.Printf("error on decoding JSON response for MMS service: %s", err)
 		return [][]MMSData{}, nil
 	}
 	for i := 0; i < len(tmpResult); i++ {
 		if pkg.IsValidCountryCode(tmpResult[i].Country) && pkg.IsValidProvider(tmpResult[i].Provider) {
 			result = append(result, tmpResult[i])
 		} else {
-			logger.Logger.Println("something wrong... ", tmpResult[i].Country, ", or", tmpResult[i].Provider, " not valid")
+			fmt.Println("something wrong... ", tmpResult[i].Country, ", or", tmpResult[i].Provider, " not valid")
 		}
 	}
 	sortedResult = append(sortedResult, result)
@@ -149,7 +153,11 @@ func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error
 		report []int
 	)
 
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return nil, err
+	}
 	json.Unmarshal(cfg, &confT)
 	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTP.ServicePort, confT.HTTP.Support)
 
@@ -162,12 +170,13 @@ func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error
 
 	resu, err := io.ReadAll(res.Body)
 	if err != nil {
-		logger.Logger.Errorf("error on response body for support service: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Printf("error on response body for support service: %v", err)
 		return []int{}, nil
 	}
 	if err := json.Unmarshal(resu, &result); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		logger.Logger.Errorf("error on decoding JSON response for support service: %s", err)
+		fmt.Printf("error on decoding JSON response for support service: %s", err)
 		return []int{}, nil
 	}
 
@@ -197,7 +206,11 @@ func GetIncidentData(w http.ResponseWriter, r *http.Request) ([]IncidentData, er
 		result []IncidentData
 	)
 
-	cfg := config.GetConfig()
+	cfg, err := config.GetConfig()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return nil, err
+	}
 	json.Unmarshal(cfg, &confT)
 
 	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTP.ServicePort, confT.HTTP.Incident)
@@ -205,20 +218,20 @@ func GetIncidentData(w http.ResponseWriter, r *http.Request) ([]IncidentData, er
 	res, err := http.Get(url)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		logger.Logger.Errorf("error parse url: %s", err)
+		fmt.Printf("error parse url: %v", err)
 		return []IncidentData{}, nil //[]IncidentData{}, nil
 	}
 
 	rr, err := io.ReadAll(res.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		logger.Logger.Errorf("error on response body for insident service:%s", err)
+		fmt.Printf("error on response body for insident service: %v", err)
 		return []IncidentData{}, nil
 	}
 
 	if err := json.Unmarshal(rr, &result); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		logger.Logger.Errorf("error on decoding JSON response for insident service: %s", err)
+		fmt.Printf("error on decoding JSON response for insident service: %v", err)
 		return []IncidentData{}, nil
 	}
 	//	w.WriteHeader(200)
