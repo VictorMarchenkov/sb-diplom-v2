@@ -9,7 +9,7 @@ import (
 	"sb-diplom-v2/config"
 	"sb-diplom-v2/internal/logger"
 	"sb-diplom-v2/pkg"
-	cfg2 "sb-diplom-v2/pkg/cfg"
+	cfg2 "sb-diplom-v2/pkg/cfgPath"
 	"sort"
 	"strconv"
 )

@@ -2,18 +2,17 @@ package app
 
 import (
 	"context"
-
 	"fmt"
 	"github.com/go-co-op/gocron"
-
 	"net/http"
 	"os"
 	"os/signal"
-	cfg "sb-diplom-v2/internal"
-	"sb-diplom-v2/pkg"
-	cfg2 "sb-diplom-v2/pkg/cfg"
 	"syscall"
 	"time"
+
+	cfg "sb-diplom-v2/internal"
+	"sb-diplom-v2/pkg"
+	cfg2 "sb-diplom-v2/pkg/cfgPath"
 )
 
 // Run presents the server logic

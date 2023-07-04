@@ -4,9 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
 	"sb-diplom-v2/internal/app"
 	"sb-diplom-v2/internal/logger"
-	"sb-diplom-v2/pkg/cfg"
+	"sb-diplom-v2/pkg/cfgPath"
 )
 
 // main -.
@@ -25,10 +26,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	appCfg, err := cfg.Init(configFilePath)
+	cfg, err := cfgPath.Init(configFilePath)
 	if err != nil {
 		fmt.Println("config. file path is empty")
 		os.Exit(1)
 	}
-	app.Run(appCfg)
+	app.Run(cfg)
 }

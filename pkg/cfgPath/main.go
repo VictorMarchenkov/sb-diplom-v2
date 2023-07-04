@@ -1,4 +1,4 @@
-package cfg
+package cfgPath
 
 import (
 	"encoding/json"
