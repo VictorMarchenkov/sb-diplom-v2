@@ -33,7 +33,7 @@ func Run(cfgRoot *cfg2.Root) {
 
 	s.Every("10s").Do(func() {
 		fmt.Println("files rereading")
-		resultT.HandlerFiles(cfgRoot.CSV)
+		resultT.HandlerFiles(cfgRoot)
 	})
 
 	s.StartAsync()

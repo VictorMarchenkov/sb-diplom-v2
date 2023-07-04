@@ -9,6 +9,7 @@ import (
 	"sb-diplom-v2/config"
 	"sb-diplom-v2/internal/logger"
 	"sb-diplom-v2/pkg"
+	cfg2 "sb-diplom-v2/pkg/cfg"
 	"sort"
 	"strconv"
 )
@@ -52,7 +53,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandlerFiles method of StatusResult for treating files.
-func (t *StatusResult) HandlerFiles(cfg interface{}) {
+func (t *StatusResult) HandlerFiles(cfg *cfg2.Root) {
 	var err error
 
 	t.Data.SMS, err = GetSmsData(cfg.CSV.Sms)

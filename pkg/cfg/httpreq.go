@@ -2,11 +2,15 @@ package cfg
 
 import (
 	"fmt"
-	entities "sb-diplom-v2/internal"
 )
 
 type httpReq struct {
-	entities.Http
+	ServerPort  int    `json:"server_port"`
+	ServicePort int    `json:"service_port"`
+	Status      string `json:"status"`
+	Mms         string `json:"mms"`
+	Support     string `json:"support"`
+	Incident    string `json:"incident"`
 }
 
 func (h *httpReq) iniate() error {

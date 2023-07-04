@@ -25,10 +25,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, err := cfg.Init(configFilePath)
+	appCfg, err := cfg.Init(configFilePath)
 	if err != nil {
 		fmt.Println("config. file path is empty")
 		os.Exit(1)
 	}
-	app.Run(cfg)
+	app.Run(appCfg)
 }

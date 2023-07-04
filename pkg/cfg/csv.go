@@ -2,11 +2,13 @@ package cfg
 
 import (
 	"fmt"
-	entities "sb-diplom-v2/internal"
 )
 
 type csv struct {
-	entities.Csv
+	Sms     string `json:"sms"`
+	Voice   string `json:"voice"`
+	Email   string `json:"email"`
+	Billing string `json:"billing"`
 }
 
 func (c *csv) initiate() error {
