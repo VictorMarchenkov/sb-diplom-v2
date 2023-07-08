@@ -21,3 +21,7 @@ func (h *httpServer) validate() error {
 
 	return nil
 }
+
+func (h *httpServer) HostPort() string {
+	return fmt.Sprint(":", h.Port)
+}

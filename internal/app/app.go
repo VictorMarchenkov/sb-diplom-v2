@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"github.com/go-co-op/gocron"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,40 +11,39 @@ import (
 	cfg "sb-diplom-v2/internal"
 	"sb-diplom-v2/pkg"
 	cfg2 "sb-diplom-v2/pkg/cfgPath"
+	"sb-diplom-v2/pkg/logger"
+
+	"github.com/go-co-op/gocron"
 )
 
-// Run presents the server logic
+// Run runs HTTP-server.
 func Run(cfgRoot *cfg2.Root) {
+	l := logger.New("http-server")
+	l.Info("starting on %v", cfgRoot.HTTPServer.HostPort())
+	defer l.Info("exit")
 
-	var resultT cfg.StatusResult
-	var service = "skillbox diploma"
-
-	start := fmt.Sprintf(":%d", cfgRoot.HTTPServer.Port)
-
-	mux := http.NewServeMux()
 	s := gocron.NewScheduler(time.UTC)
-
-	fs := http.FileServer(http.Dir("generator"))
-	http.Handle("/", fs)
-
-	info := http.FileServer(http.Dir("."))
-	mux.Handle("/info/", info)
-
-	s.Every("10s").Do(func() {
-		fmt.Println("files rereading")
+	var resultT cfg.StatusResult
+	if _, err := s.Every("10s").Do(func() {
+		l.Info("files rereading")
 		resultT.HandlerFiles(cfgRoot)
-	})
-
+	}); err != nil {
+		l.Error("scheduling error", err)
+		return
+	}
 	s.StartAsync()
 
-	mux.Handle("/presentation/", info)
+	mux := http.NewServeMux()
+	http.Handle("/", http.FileServer(http.Dir("generator")))
+	mux.Handle("/info/", http.FileServer(http.Dir(".")))
+	mux.Handle("/presentation/", http.FileServer(http.Dir(".")))
 	mux.HandleFunc("/api", resultT.HandlerHTTP)
 
 	panicWrapped := pkg.PanicMiddleware(mux)
 	siteHandler := pkg.AccessLogMiddleware(panicWrapped)
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s", start),
+		Addr:    cfgRoot.HTTPServer.HostPort(),
 		Handler: siteHandler,
 	}
 
@@ -55,21 +52,18 @@ func Run(cfgRoot *cfg2.Root) {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("listen error %v\n", err)
+			l.Error("listen: %v", err)
 			os.Exit(1)
 		}
 	}()
-	fmt.Printf("%s starting on %d", service, cfgRoot.HTTPServer.Port)
+
 	<-stop
 
-	fmt.Printf("%s shutting down ...", service)
-
+	l.Info("shutting down")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer func() {
-		cancel()
-	}()
+	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		fmt.Errorf("Server Shutdown Failed:%+v", err)
+		l.Error("shutdown: %v", err)
 	}
 }
