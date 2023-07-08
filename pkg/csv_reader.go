@@ -13,6 +13,7 @@ import (
 func ReadCSV(path string) [][]string {
 
 	var rawCSVData [][]string
+
 	_, err := os.Stat(path)
 	if err != nil {
 		log.Println("Cannot stat", path)

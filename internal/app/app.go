@@ -25,8 +25,10 @@ func Run(cfgRoot *cfg2.Root) {
 
 	mux := http.NewServeMux()
 	s := gocron.NewScheduler(time.UTC)
+
 	fs := http.FileServer(http.Dir("generator"))
 	http.Handle("/", fs)
+
 	info := http.FileServer(http.Dir("."))
 	mux.Handle("/info/", info)
 

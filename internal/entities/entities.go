@@ -1,5 +1,5 @@
 // Package internal All entities of the project
-package internal
+package entities
 
 // CSV
 
@@ -60,13 +60,6 @@ type SupportData struct {
 type IncidentData struct {
 	Topic  string `json:"topic"`
 	Status string `json:"status"`
-}
-
-// StatusResult structure to collect all information.
-type StatusResult struct {
-	Status bool            `json:"status"` // заполнен если все ОК, nil в противном случае
-	Data   SetStatusResult `json:"data"`
-	Error  string          `json:"error"` // пустая строка если все ОК, в противеом случае текст ошибки
 }
 
 // SetStatusResult structure to collect al data.
