@@ -1,4 +1,4 @@
-package sms
+package email
 
 import (
 	"bufio"
@@ -11,9 +11,8 @@ import (
 
 type Data struct {
 	country      string
-	bandWidth    uint8
-	responseTime uint
 	provider     string
+	deliveryTime int
 }
 
 func (d *Data) validate() error {
@@ -21,7 +20,7 @@ func (d *Data) validate() error {
 		return fmt.Errorf("invalid country code length: %v", d.country)
 	}
 
-	if _, ok := entities.ISOCountries[d.country]; ok {
+	if _, ok := entities.ISOCountries[d.country]; !ok {
 		return fmt.Errorf("unknown country code: %v", d.country)
 	}
 
@@ -29,9 +28,10 @@ func (d *Data) validate() error {
 		return fmt.Errorf("provider is empty")
 	}
 
-	if _, ok := entities.SMSProviders[d.provider]; !ok {
+	if _, ok := entities.EmailProviders[d.provider]; !ok {
 		return fmt.Errorf("unknown provider: %v", d.provider)
 	}
+
 	return nil
 }
 
@@ -39,29 +39,19 @@ type Records []Data
 
 func newFromString(str string) (Data, error) {
 	fields := strings.Split(str, ";")
-	if len(fields) != 4 {
+	if len(fields) != 3 {
 		return Data{}, fmt.Errorf("wrong number of fields: %d", len(fields))
 	}
 	result := Data{
-		country:  fields[0],
-		provider: fields[3],
+		country:  fields[1],
+		provider: fields[2],
 	}
 
-	v, err := strconv.ParseUint(fields[1], 10, 8)
+	v, err := strconv.Atoi(fields[3])
 	if err != nil {
-		return Data{}, fmt.Errorf("invalid throughput: %q", fields[1])
+		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[3])
 	}
-	result.bandWidth = uint8(v)
-
-	v, err = strconv.ParseUint(fields[2], 10, 64)
-	if err != nil {
-		return Data{}, fmt.Errorf("invalid response time: %q", fields[2])
-	}
-	result.responseTime = uint(v)
-
-	if err := result.validate(); err != nil {
-		return Data{}, err
-	}
+	result.deliveryTime = v
 
 	return result, nil
 }

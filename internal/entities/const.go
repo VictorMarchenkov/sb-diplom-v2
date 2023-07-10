@@ -252,8 +252,30 @@ var ISOCountries = map[string]struct{}{
 	"ZW": {},
 }
 
-var Providers = map[string]struct{}{
+var SMSProviders = map[string]struct{}{
 	"Topolo": {},
 	"Rond":   {},
 	"Kildy":  {},
+}
+
+var VoiceCallProviders = map[string]struct{}{
+	"TransparentCalls": {},
+	"E-Voice":          {},
+	"JustPhone":        {},
+}
+
+var EmailProviders = map[string]struct{}{
+	"Gmail":      {},
+	"Yahoo":      {},
+	"Hotmail":    {},
+	"MSN":        {},
+	"Orange":     {},
+	"Comcast":    {},
+	"AOL":        {},
+	"Live":       {},
+	"RediffMail": {},
+	"GMX":        {},
+	"Protonmail": {},
+	"Yandex":     {},
+	"Mail.ru":    {},
 }

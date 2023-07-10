@@ -1,4 +1,4 @@
-package sms
+package voice_call
 
 import (
 	"bufio"
@@ -10,10 +10,14 @@ import (
 )
 
 type Data struct {
-	country      string
-	bandWidth    uint8
-	responseTime uint
-	provider     string
+	country             string
+	bandwidth           string
+	responseTime        string
+	provider            string
+	connectionStability float32
+	ttfb                int
+	voicePurity         int
+	medianOfCallsTime   int
 }
 
 func (d *Data) validate() error {
@@ -29,9 +33,10 @@ func (d *Data) validate() error {
 		return fmt.Errorf("provider is empty")
 	}
 
-	if _, ok := entities.SMSProviders[d.provider]; !ok {
+	if _, ok := entities.VoiceCallProviders[d.provider]; !ok {
 		return fmt.Errorf("unknown provider: %v", d.provider)
 	}
+
 	return nil
 }
 
@@ -39,29 +44,40 @@ type Records []Data
 
 func newFromString(str string) (Data, error) {
 	fields := strings.Split(str, ";")
-	if len(fields) != 4 {
+	if len(fields) != 8 {
 		return Data{}, fmt.Errorf("wrong number of fields: %d", len(fields))
 	}
+
 	result := Data{
-		country:  fields[0],
-		provider: fields[3],
+		country:      fields[0],
+		bandwidth:    fields[1],
+		responseTime: fields[2],
+		provider:     fields[3],
 	}
 
-	v, err := strconv.ParseUint(fields[1], 10, 8)
+	v4, err := strconv.ParseFloat(fields[4], 32)
 	if err != nil {
-		return Data{}, fmt.Errorf("invalid throughput: %q", fields[1])
+		return Data{}, fmt.Errorf("invalid response time: %q", fields[4])
 	}
-	result.bandWidth = uint8(v)
+	result.connectionStability = float32(v4)
 
-	v, err = strconv.ParseUint(fields[2], 10, 64)
+	v5, err := strconv.Atoi(fields[5])
 	if err != nil {
-		return Data{}, fmt.Errorf("invalid response time: %q", fields[2])
+		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[5])
 	}
-	result.responseTime = uint(v)
+	result.ttfb = v5
 
-	if err := result.validate(); err != nil {
-		return Data{}, err
+	v6, err := strconv.Atoi(fields[6])
+	if err != nil {
+		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[6])
 	}
+	result.voicePurity = v6
+
+	v7, err := strconv.Atoi(fields[7])
+	if err != nil {
+		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[7])
+	}
+	result.medianOfCallsTime = v7
 
 	return result, nil
 }
@@ -75,6 +91,7 @@ func NewFromFile(fileName string) (Records, error) {
 
 	var result Records
 	var line string
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line = scanner.Text()
