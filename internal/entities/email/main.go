@@ -53,6 +53,10 @@ func newFromString(str string) (Data, error) {
 	}
 	result.deliveryTime = v
 
+	if err := result.validate(); err != nil {
+		return Data{}, err
+	}
+
 	return result, nil
 }
 

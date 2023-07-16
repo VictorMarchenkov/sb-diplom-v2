@@ -79,6 +79,10 @@ func newFromString(str string) (Data, error) {
 	}
 	result.medianOfCallsTime = v7
 
+	if err := result.validate(); err != nil {
+		return Data{}, err
+	}
+
 	return result, nil
 }
 
