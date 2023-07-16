@@ -16,8 +16,6 @@ type Data struct {
 	CheckoutPage   bool
 }
 
-type Key int
-
 func (d *Data) validate() error {
 	return nil
 }
