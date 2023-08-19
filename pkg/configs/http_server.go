@@ -1,6 +1,9 @@
-package cfgPath
+package configs
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type httpServer struct {
 	Port uint `json:"port"`
@@ -12,11 +15,11 @@ func (h *httpServer) initiate() error {
 
 func (h *httpServer) validate() error {
 	if h.Port == 0 {
-		return fmt.Errorf("port is empty")
+		return errors.New("port is empty")
 	}
 
 	if h.Port > 65535 {
-		return fmt.Errorf("invalid port")
+		return errors.New("invalid port")
 	}
 
 	return nil

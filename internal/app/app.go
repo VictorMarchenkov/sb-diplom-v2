@@ -5,33 +5,43 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	cfg "sb-diplom-v2/internal"
+	"sb-diplom-v2/internal"
 	"sb-diplom-v2/pkg"
-	cfg2 "sb-diplom-v2/pkg/cfgPath"
+	"sb-diplom-v2/pkg/configs"
 	"sb-diplom-v2/pkg/logger"
-
-	"github.com/go-co-op/gocron"
 )
 
 // Run runs HTTP-server.
-func Run(cfgRoot *cfg2.Root) {
+func Run(cfgRoot *configs.Root) {
 	l := logger.New("http-server")
 	l.Info("starting on %v", cfgRoot.HTTPServer.HostPort())
 	defer l.Info("exit")
 
-	s := gocron.NewScheduler(time.UTC)
-	var resultT cfg.StatusResult
-	if _, err := s.Every("10s").Do(func() {
-		l.Info("files rereading")
-		resultT.HandlerFiles(cfgRoot)
-	}); err != nil {
-		l.Error("scheduling error", err)
-		return
-	}
-	s.StartAsync()
+	// async file updater
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	resultT := internal.NewStatusResult(cfgRoot)
+
+	go func(wg *sync.WaitGroup) {
+		wg.Add(1)
+		defer wg.Done()
+
+		ticker := time.NewTicker(time.Second * 10)
+		for {
+			select {
+			case <-ticker.C:
+				l.Info("files reading")
+				resultT.HandlerFiles(cfgRoot)
+			case <-ctx.Done():
+				l.Info("updater exited")
+				return
+			}
+		}
+	}(&wg)
 
 	mux := http.NewServeMux()
 	http.Handle("/", http.FileServer(http.Dir("generator")))
@@ -59,9 +69,10 @@ func Run(cfgRoot *cfg2.Root) {
 
 	<-stop
 
+	cancel()
+	wg.Wait()
+
 	l.Info("shutting down")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
 		l.Error("shutdown: %v", err)

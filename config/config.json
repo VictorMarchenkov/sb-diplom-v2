@@ -6,6 +6,7 @@
     "billing": "generator/billing.data"
   },
   "http_service": {
+    "mms_url": "http://localhost:8383/mms",
     "port": 8383,
     "status": "/info",
     "mms": "/mms",

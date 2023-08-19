@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"sb-diplom-v2/internal/app"
-	"sb-diplom-v2/pkg/cfgPath"
+	"sb-diplom-v2/pkg/configs"
 	"sb-diplom-v2/pkg/logger"
 )
 
@@ -31,10 +31,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	appCfg, err := cfgPath.Init(configFilePath)
+	cfg, err := configs.Init(configFilePath)
 	if err != nil {
 		l.Error("config file path is not valid", err)
 		os.Exit(1)
 	}
-	app.Run(appCfg)
+	app.Run(cfg)
 }

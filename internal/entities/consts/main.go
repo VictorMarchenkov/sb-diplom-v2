@@ -1,4 +1,4 @@
-package entities
+package consts
 
 var ISOCountries = map[string]struct{}{
 	"AF": {},
@@ -250,6 +250,12 @@ var ISOCountries = map[string]struct{}{
 	"YE": {},
 	"ZM": {},
 	"ZW": {},
+}
+
+var MMSProviders = map[string]struct{}{
+	"Topolo": {},
+	"Rond":   {},
+	"Kildy":  {},
 }
 
 var SMSProviders = map[string]struct{}{

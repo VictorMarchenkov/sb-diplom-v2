@@ -1,6 +1,8 @@
 // Package internal All entities of the project
 package entities
 
+import "sb-diplom-v2/internal/entities/mms"
+
 // CSV
 
 // SMSData describes the structure of data sms.
@@ -65,7 +67,7 @@ type IncidentData struct {
 // SetStatusResult structure to collect al data.
 type SetStatusResult struct {
 	SMS       [][]SMSData     `json:"sms"`
-	MMS       [][]MMSData     `json:"mms"`
+	MMS       []mms.Set       `json:"mms"`
 	VoiceCall []VoiceCallData `json:"voice_call"`
 	Email     [][]EmailData   `json:"email"`
 	Billing   BillingData     `json:"billing"`

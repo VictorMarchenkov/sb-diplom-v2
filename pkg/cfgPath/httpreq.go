@@ -1,41 +1,36 @@
-package cfgPath
+package config
 
 import (
-	"fmt"
+	"errors"
 )
 
-type httpService struct {
-	Port     int    `json:"port"`
-	Status   string `json:"status"`
-	Mms      string `json:"mms"`
-	Support  string `json:"support"`
-	Incident string `json:"incident"`
+type csv struct {
+	Sms     string `json:"sms"`
+	Voice   string `json:"voice"`
+	Email   string `json:"email"`
+	Billing string `json:"billing"`
 }
 
-func (s *httpService) initiate() error {
-	return s.validate()
+func (c *csv) initiate() error {
+	return c.validate()
 }
 
-func (s *httpService) validate() error {
+func (c *csv) validate() error {
 
-	if s.Port == 0 {
-		return fmt.Errorf("undefined service port")
+	if c.Sms == "" {
+		return errors.New("error path to data of sms undefined")
 	}
 
-	if s.Port > 65535 {
-		return fmt.Errorf("invalide service port")
+	if c.Email == "" {
+		return errors.New("error path to data of email undefined")
 	}
 
-	if s.Mms == "" {
-		return fmt.Errorf("path to data of Mms info undefined")
+	if c.Voice == "" {
+		return errors.New("error path to data of voice undefined")
 	}
 
-	if s.Support == "" {
-		return fmt.Errorf("path to data of Support info undefined")
-	}
-
-	if s.Incident == "" {
-		return fmt.Errorf("path to data of Incident info undefined")
+	if c.Billing == "" {
+		return errors.New("error path to data of billing undefined")
 	}
 
 	return nil

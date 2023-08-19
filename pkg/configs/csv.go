@@ -1,8 +1,6 @@
-package cfgPath
+package configs
 
-import (
-	"fmt"
-)
+import "errors"
 
 type csv struct {
 	Sms     string `json:"sms"`
@@ -17,19 +15,19 @@ func (c *csv) initiate() error {
 
 func (c *csv) validate() error {
 	if c.Sms == "" {
-		return fmt.Errorf("path to data of sms undefined")
+		return errors.New("path to data of sms undefined")
 	}
 
 	if c.Email == "" {
-		return fmt.Errorf("path to data of email undefined")
+		return errors.New("path to data of email undefined")
 	}
 
 	if c.Voice == "" {
-		return fmt.Errorf("path to data of voice undefined")
+		return errors.New("path to data of voice undefined")
 	}
 
 	if c.Billing == "" {
-		return fmt.Errorf("path to data of billing undefined")
+		return errors.New("path to data of billing undefined")
 	}
 
 	return nil

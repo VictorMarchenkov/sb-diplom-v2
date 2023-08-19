@@ -3,19 +3,23 @@ package internal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"sb-diplom-v2/config"
-	"sb-diplom-v2/internal/entities"
-	"sb-diplom-v2/pkg"
-	cfg2 "sb-diplom-v2/pkg/cfgPath"
 	"sort"
 	"strconv"
+
+	"sb-diplom-v2/config"
+	"sb-diplom-v2/internal/entities"
+	"sb-diplom-v2/internal/entities/mms"
+	"sb-diplom-v2/pkg"
+	"sb-diplom-v2/pkg/configs"
+	"sb-diplom-v2/pkg/logger"
 )
 
 var (
-	errFileOpen = fmt.Errorf("error reading data file")
+	errFileOpen = errors.New("error reading data file")
 	errFetchUrl = ""
 )
 
@@ -24,35 +28,41 @@ type StatusResult struct {
 	Status bool                     `json:"status"` // заполнен если все ОК, nil в противном случае
 	Data   entities.SetStatusResult `json:"data"`
 	Error  string                   `json:"error"` // пустая строка если все ОК, в противеом случае текст ошибки
+	l      logger.Logger
+	cfg    *configs.Root
+}
+
+func NewStatusResult(cfg *configs.Root) *StatusResult {
+	return &StatusResult{l: logger.New("status-result"), cfg: cfg}
 }
 
 // HandlerHTTP method of StatusResult for treating http queries.
 func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
-	t.Status = true
+	var err error
 
-	MMS, err := GetMmsData(w, r)
+	t.Data.MMS, err = mms.SortedResult(t.cfg.HTTPService.MMSURL)
 	if err != nil {
 		t.Status = false
-		t.Error = fmt.Sprintf("%s", err)
-		fmt.Println("error when reading mms data: %v", err)
+		t.Error = err.Error()
+		http.Error(w, "error read of mms data: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	t.Data.MMS = MMS
 
-	INCIDENT, err := GetIncidentData(w, r)
+	t.Data.Incident, err = GetIncidentData(w, r)
 	if err != nil {
 		t.Status = false
-		t.Error = fmt.Sprintf("%s", err)
-		fmt.Printf("error when reading incidents data: %v", err)
+		t.Error = err.Error()
+		http.Error(w, "error read of incident data: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	t.Data.Incident = INCIDENT
 
-	SUPPORT, err := GetSupportServiceData(w, r)
+	t.Data.Support, err = GetSupportServiceData(w, r)
 	if err != nil {
 		t.Status = false
-		t.Error = fmt.Sprintf("%s", err)
-		fmt.Printf("error when reading support service data: %v", err)
+		t.Error = err.Error()
+		http.Error(w, "error read of support data: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	t.Data.Support = SUPPORT
 
 	result, _ := json.Marshal(t)
 
@@ -60,7 +70,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandlerFiles method of StatusResult for treating files.
-func (t *StatusResult) HandlerFiles(cfg *cfg2.Root) {
+func (t *StatusResult) HandlerFiles(cfg *configs.Root) {
 	var err error
 
 	t.Data.SMS, err = GetSmsData(cfg.CSV.Sms)
@@ -94,7 +104,7 @@ func (t *StatusResult) HandlerFiles(cfg *cfg2.Root) {
 // GetMmsData collects mms data .
 func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]entities.MMSData, error) {
 	var (
-		confT        *cfg2.Root
+		confT        *configs.Root
 		tmpResult    []entities.MMSData
 		result       []entities.MMSData
 		sortedResult [][]entities.MMSData
@@ -155,7 +165,7 @@ func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]entities.MMSData, e
 // GetSupportServiceData  collects support data.
 func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error) {
 	var (
-		confT  cfg2.Root
+		confT  configs.Root
 		result []entities.SupportData
 		report []int
 	)
@@ -209,7 +219,7 @@ func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error
 func GetIncidentData(w http.ResponseWriter, r *http.Request) ([]entities.IncidentData, error) {
 	//return nil, fmt.Errorf("incident handler %s", "test error")
 	var (
-		confT  cfg2.Root
+		confT  configs.Root
 		result []entities.IncidentData
 	)
 

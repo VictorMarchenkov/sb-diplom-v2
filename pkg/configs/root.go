@@ -1,6 +1,8 @@
-package cfgPath
+package configs
 
-import "fmt"
+import (
+	"errors"
+)
 
 type Root struct {
 	HTTPServer  httpServer  `json:"http_server"`
@@ -11,15 +13,15 @@ type Root struct {
 func (r *Root) initiate() error {
 
 	if err := r.HTTPServer.initiate(); err != nil {
-		return fmt.Errorf("http_server: %w", err)
+		return errors.New("error initiate http_server")
 	}
 
 	if err := r.CSV.initiate(); err != nil {
-		return fmt.Errorf("csv: %w", err)
+		return errors.New("error initiate csv service")
 	}
 
 	if err := r.HTTPService.initiate(); err != nil {
-		return fmt.Errorf("http service: %w", err)
+		return errors.New("error initiate http service")
 	}
 
 	return nil
