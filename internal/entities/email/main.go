@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sb-diplom-v2/internal/entities"
 	"strconv"
 	"strings"
+
+	"sb-diplom-v2/internal/entities/consts"
 )
 
 type Data struct {
@@ -20,7 +21,7 @@ func (d *Data) validate() error {
 		return fmt.Errorf("invalid country code length: %v", d.country)
 	}
 
-	if _, ok := entities.ISOCountries[d.country]; !ok {
+	if _, ok := consts.ISOCountries[d.country]; !ok {
 		return fmt.Errorf("unknown country code: %v", d.country)
 	}
 
@@ -28,7 +29,7 @@ func (d *Data) validate() error {
 		return fmt.Errorf("provider is empty")
 	}
 
-	if _, ok := entities.EmailProviders[d.provider]; !ok {
+	if _, ok := consts.EmailProviders[d.provider]; !ok {
 		return fmt.Errorf("unknown provider: %v", d.provider)
 	}
 
