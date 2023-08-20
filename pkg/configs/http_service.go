@@ -31,10 +31,6 @@ func (s *httpService) validate() error {
 		return errors.New("error empty support_url")
 	}
 
-	if s.StatusURL == "" {
-		return errors.New("error empty status_url")
-	}
-
 	if s.Port == 0 {
 		return errors.New("error empty port")
 	}

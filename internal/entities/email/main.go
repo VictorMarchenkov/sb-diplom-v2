@@ -1,9 +1,7 @@
 package email
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -61,22 +59,22 @@ func newFromString(str string) (Data, error) {
 	return result, nil
 }
 
-func NewFromFile(fileName string) (Records, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var result Records
-	var line string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line = scanner.Text()
-		if d, err := newFromString(line); err == nil {
-			result = append(result, d)
-		}
-	}
-
-	return result, nil
-}
+//func NewFromFile(fileName string) (Records, error) {
+//	file, err := os.Open(fileName)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer file.Close()
+//
+//	var result Records
+//	var line string
+//	scanner := bufio.NewScanner(file)
+//	for scanner.Scan() {
+//		line = scanner.Text()
+//		if d, err := newFromString(line); err == nil {
+//			result = append(result, d)
+//		}
+//	}
+//
+//	return result, nil
+//}
