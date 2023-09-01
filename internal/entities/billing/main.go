@@ -35,7 +35,6 @@ func newFromString(str string) (Data, error) {
 		return result, fmt.Errorf("decoding of the string %v", err)
 	}
 
-	d, err = strconv.ParseInt(str, 2, 32)
 	result.CreateCustomer = d&(1<<uint(0)) != 0
 	result.Purchase = d&(1<<uint(1)) != 0
 	result.Payout = d&(1<<uint(2)) != 0

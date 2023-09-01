@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 )
 
@@ -9,7 +9,7 @@ import (
 func GetConfig() ([]byte, error) {
 	rawConfig, err := ioutil.ReadFile("config/config.json")
 	if err != nil {
-		fmt.Println("error opening config filr: ", err.Error())
+		errors.New("error opening config file")
 		return nil, err
 	}
 	return rawConfig, nil

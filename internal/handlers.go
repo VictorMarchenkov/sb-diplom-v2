@@ -101,66 +101,66 @@ func (t *StatusResult) HandlerFiles(cfg *configs.Root) {
 	}
 }
 
-// GetMmsData collects mms data .
-func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]entities.MMSData, error) {
-	var (
-		confT        *configs.Root
-		tmpResult    []entities.MMSData
-		result       []entities.MMSData
-		sortedResult [][]entities.MMSData
-	)
-
-	cfg, err := config.GetConfig()
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return nil, err
-	}
-	json.Unmarshal(cfg, &confT)
-	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTPService.Port, confT.HTTPService.Mms)
-
-	res, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("error parse %s: %v", url, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return [][]entities.MMSData{}, nil
-	}
-	//	w.WriteHeader(200)
-	rr, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Printf("error on response body for MMS service: %v", err)
-		return [][]entities.MMSData{}, nil
-	}
-
-	if err := json.Unmarshal(rr, &tmpResult); err != nil {
-		fmt.Printf("error on decoding JSON response for MMS service: %s", err)
-		return [][]entities.MMSData{}, nil
-	}
-	for i := 0; i < len(tmpResult); i++ {
-		if pkg.IsValidCountryCode(tmpResult[i].Country) && pkg.IsValidProvider(tmpResult[i].Provider) {
-			result = append(result, tmpResult[i])
-		} else {
-			fmt.Println("something wrong... ", tmpResult[i].Country, ", or", tmpResult[i].Provider, " not valid")
-		}
-	}
-	sortedResult = append(sortedResult, result)
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Country < result[j].Country
-	})
-
-	resultCopy := append([]entities.MMSData(nil), result...)
-	sort.Slice(resultCopy, func(i, j int) bool {
-		return resultCopy[i].Provider < resultCopy[j].Provider
-	})
-	sortedResult = append(sortedResult, resultCopy)
-
-	for i := 0; i < len(sortedResult); i++ {
-		for j := 0; j < len(sortedResult[i]); j++ {
-			sortedResult[i][j].Country = pkg.CodeToName(sortedResult[i][j].Country)
-		}
-	}
-
-	return sortedResult, nil
-}
+//// GetMmsData collects mms data .
+//func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]entities.MMSData, error) {
+//	var (
+//		confT        *configs.Root
+//		tmpResult    []entities.MMSData
+//		result       []entities.MMSData
+//		sortedResult [][]entities.MMSData
+//	)
+//
+//	cfg, err := config.GetConfig()
+//	if err != nil {
+//		w.WriteHeader(http.StatusServiceUnavailable)
+//		return nil, err
+//	}
+//	json.Unmarshal(cfg, &confT)
+//	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTPService.Port, confT.HTTPService.Mms)
+//
+//	res, err := http.Get(url)
+//	if err != nil {
+//		fmt.Printf("error parse %s: %v", url, err)
+//		w.WriteHeader(http.StatusInternalServerError)
+//		return [][]entities.MMSData{}, nil
+//	}
+//	//	w.WriteHeader(200)
+//	rr, err := io.ReadAll(res.Body)
+//	if err != nil {
+//		fmt.Printf("error on response body for MMS service: %v", err)
+//		return [][]entities.MMSData{}, nil
+//	}
+//
+//	if err := json.Unmarshal(rr, &tmpResult); err != nil {
+//		fmt.Printf("error on decoding JSON response for MMS service: %s", err)
+//		return [][]entities.MMSData{}, nil
+//	}
+//	for i := 0; i < len(tmpResult); i++ {
+//		if pkg.IsValidCountryCode(tmpResult[i].Country) && pkg.IsValidProvider(tmpResult[i].Provider) {
+//			result = append(result, tmpResult[i])
+//		} else {
+//			fmt.Println("something wrong... ", tmpResult[i].Country, ", or", tmpResult[i].Provider, " not valid")
+//		}
+//	}
+//	sortedResult = append(sortedResult, result)
+//	sort.Slice(result, func(i, j int) bool {
+//		return result[i].Country < result[j].Country
+//	})
+//
+//	resultCopy := append([]entities.MMSData(nil), result...)
+//	sort.Slice(resultCopy, func(i, j int) bool {
+//		return resultCopy[i].Provider < resultCopy[j].Provider
+//	})
+//	sortedResult = append(sortedResult, resultCopy)
+//
+//	for i := 0; i < len(sortedResult); i++ {
+//		for j := 0; j < len(sortedResult[i]); j++ {
+//			sortedResult[i][j].Country = pkg.CodeToName(sortedResult[i][j].Country)
+//		}
+//	}
+//
+//	return sortedResult, nil
+//}
 
 // GetSupportServiceData  collects support data.
 func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error) {
