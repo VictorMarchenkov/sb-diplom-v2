@@ -1,4 +1,4 @@
-package mms
+package incident
 
 import (
 	"context"
@@ -6,37 +6,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"time"
-
-	"sb-diplom-v2/internal/entities/consts"
 )
 
 type Data struct {
-	Country      string `json:"country"`
-	Provider     string `json:"provider"`
-	Bandwidth    string `json:"bandwidth"`
-	ResponseTime string `json:"response_time"`
+	Topic  string `json:"topic"`
+	Status string `json:"status"`
 }
 
 type Set []Data
 
 func (d *Data) validate() error {
-	if len(d.Country) != 2 {
-		return fmt.Errorf("invalid country code length: %v", d.Country)
+	if d.Topic == "" {
+		return fmt.Errorf("topic is empty")
 	}
 
-	if _, ok := consts.ISOCountries[d.Country]; !ok {
-		return fmt.Errorf("unknown country code: %v", d.Country)
+	if d.Status == "" {
+		return fmt.Errorf("status is empty")
 	}
 
-	if d.Provider == "" {
-		return fmt.Errorf("provider is empty")
-	}
-
-	if _, ok := consts.MMSProviders[d.Provider]; !ok {
-		return fmt.Errorf("unknown provider: %v", d.Provider)
-	}
 	return nil
 }
 
@@ -80,26 +68,11 @@ func new(url string) (Set, error) {
 	return result, nil
 }
 
-func SortedResult(url string) ([]Set, error) {
-	s, err := new(url)
+func Result(url string) (Set, error) {
+	result, err := new(url)
 	if err != nil {
 		return nil, err
 	}
-
-	result := make([]Set, 2)
-
-	// sort by country
-	result[0] = s
-	sort.Slice(s, func(i, j int) bool {
-		return s[i].Country < s[j].Country
-	})
-
-	// sort by provider
-	result[1] = make([]Data, len(s))
-	copy(result[1], s)
-	sort.Slice(result[1], func(i, j int) bool {
-		return result[1][i].Provider < result[1][j].Provider
-	})
 
 	return result, nil
 }

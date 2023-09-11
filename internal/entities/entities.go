@@ -1,17 +1,23 @@
 // Package internal All entities of the project
 package entities
 
-import "sb-diplom-v2/internal/entities/mms"
+import (
+	"sb-diplom-v2/internal/entities/email"
+	"sb-diplom-v2/internal/entities/incident"
+	"sb-diplom-v2/internal/entities/mms"
+	"sb-diplom-v2/internal/entities/sms"
+	"sb-diplom-v2/internal/entities/support"
+)
 
 // CSV
 
 // SMSData describes the structure of data sms.
-type SMSData struct {
-	Country      string `json:"country"`
-	Bandwidth    string `json:"bandwidth"`
-	ResponseTime string `json:"response_time"`
-	Provider     string `json:"provider"`
-}
+//type SMSData struct {
+//	Country      string `json:"country"`
+//	Bandwidth    string `json:"bandwidth"`
+//	ResponseTime string `json:"response_time"`
+//	Provider     string `json:"provider"`
+//}
 
 // VoiceCallData describes the data structure for call center services.
 type VoiceCallData struct {
@@ -42,68 +48,13 @@ type BillingData struct {
 	CheckoutPage   bool `json:"checkout_page"`
 }
 
-// HTTP
-
-// MMSData describes the data structure for .
-type MMSData struct {
-	Country      string `json:"country"`
-	Provider     string `json:"provider"`
-	Bandwidth    string `json:"bandwidth"`
-	ResponseTime string `json:"response_time"`
-}
-
-// SupportData describes the data structure for .
-type SupportData struct {
-	Topic         string `json:"topic"`
-	ActiveTickets int    `json:"active_tickets"`
-}
-
-// IncidentData describes the data structure for incident service.
-type IncidentData struct {
-	Topic  string `json:"topic"`
-	Status string `json:"status"`
-}
-
 // SetStatusResult structure to collect al data.
 type SetStatusResult struct {
-	SMS       [][]SMSData     `json:"sms"`
-	MMS       []mms.Set       `json:"mms"`
-	VoiceCall []VoiceCallData `json:"voice_call"`
-	Email     [][]EmailData   `json:"email"`
-	Billing   BillingData     `json:"billing"`
-	Support   []int           `json:"support"`
-	Incident  []IncidentData  `json:"incident"`
-}
-
-// Config structure to represent config data.
-type Config struct {
-	CSV  Csv  `json:"csv"`
-	HTTP Http `json:"httpreq"`
-}
-
-// Csv services.
-type Csv struct {
-	Sms     string `json:"sms"`
-	Voice   string `json:"voice"`
-	Email   string `json:"email"`
-	Billing string `json:"billing"`
-}
-
-// Http services structure.
-type Http struct {
-	Mms         string `json:"mms"`
-	Support     string `json:"support"`
-	Incident    string `json:"incident"`
-	ServerPort  int    `json:"server_port"`
-	ServicePort int    `json:"service_port"`
-}
-
-type CacheRepository interface {
-	Store(SetStatusResult) error
-	Find(filter ValuesFilter) (SetStatusResult, error)
-}
-
-type ValuesFilter struct {
-	CachedData SetStatusResult
-	TimeStamp  string
+	SMS       []sms.Set              `json:"sms"`
+	MMS       []mms.Set              `json:"mms"`
+	VoiceCall []VoiceCallData        `json:"voice_call"`
+	Email     map[string][]email.Set `json:"email"`
+	Billing   BillingData            `json:"billing"`
+	Support   support.Set            `json:"support"`
+	Incident  incident.Set           `json:"incident"`
 }

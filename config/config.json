@@ -7,13 +7,11 @@
   },
   "http_service": {
     "mms_url": "http://localhost:8383/mms",
-    "port": 8383,
-    "status": "/info",
-    "mms": "/mms",
-    "support": "/support",
-    "incident": "/accendent"
+    "support_url": "http://localhost:8383/support",
+    "incident_url": "http://localhost:8383/accendent"
   },
   "http_server": {
+    "status_url": "http://localhost:8282/info",
     "port": 8282
   }
 }

@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"sort"
 	"strconv"
 
-	"sb-diplom-v2/config"
 	"sb-diplom-v2/internal/entities"
+	"sb-diplom-v2/internal/entities/email"
+	"sb-diplom-v2/internal/entities/incident"
 	"sb-diplom-v2/internal/entities/mms"
+	"sb-diplom-v2/internal/entities/sms"
+	"sb-diplom-v2/internal/entities/support"
 	"sb-diplom-v2/pkg"
 	"sb-diplom-v2/pkg/configs"
 	"sb-diplom-v2/pkg/logger"
@@ -20,7 +21,7 @@ import (
 
 var (
 	errFileOpen = errors.New("error reading data file")
-	errFetchUrl = ""
+	errFetchUrl = errors.New("error fetching url")
 )
 
 // StatusResult structure to collect all information.
@@ -39,7 +40,6 @@ func NewStatusResult(cfg *configs.Root) *StatusResult {
 // HandlerHTTP method of StatusResult for treating http queries.
 func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
-
 	t.Data.MMS, err = mms.SortedResult(t.cfg.HTTPService.MMSURL)
 	if err != nil {
 		t.Status = false
@@ -48,7 +48,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t.Data.Incident, err = GetIncidentData(w, r)
+	t.Data.Incident, err = incident.Result(t.cfg.HTTPService.IncidentURL)
 	if err != nil {
 		t.Status = false
 		t.Error = err.Error()
@@ -56,7 +56,7 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t.Data.Support, err = GetSupportServiceData(w, r)
+	t.Data.Support, err = support.Result(t.cfg.HTTPService.SupportURL)
 	if err != nil {
 		t.Status = false
 		t.Error = err.Error()
@@ -73,230 +73,35 @@ func (t *StatusResult) HandlerHTTP(w http.ResponseWriter, r *http.Request) {
 func (t *StatusResult) HandlerFiles(cfg *configs.Root) {
 	var err error
 
-	t.Data.SMS, err = GetSmsData(cfg.CSV.Sms)
+	t.Data.SMS, err = sms.SortedResult(t.cfg.CSV.Sms)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		fmt.Printf("%s", err)
+		fmt.Printf("error Get Billing Service Data %s", err)
 	}
-	t.Data.VoiceCall, err = GetVoiceService(cfg.CSV.Voice)
+
+	t.Data.VoiceCall, err = GetVoiceService(t.cfg.CSV.Voice)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		fmt.Printf("%s", err)
+		fmt.Printf("error Get Voice Service Data %s", err)
 
 	}
-	t.Data.Email, err = GetEmailServiceData(cfg.CSV.Email)
+
+	t.Data.Email, err = email.SortedResult(t.cfg.CSV.Email)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		fmt.Printf("%s", err)
+		fmt.Printf("error Get Email Service Data %s", err)
 
 	}
+
 	t.Data.Billing, err = GetBillingServiceData(cfg.CSV.Billing)
 	if err != nil {
 		t.Status = false
 		t.Error = fmt.Sprintf("%s", err)
-		fmt.Printf("%s", err)
+		fmt.Printf("error Get Billing Service Data %s", err)
 	}
-}
-
-// GetMmsData collects mms data .
-func GetMmsData(w http.ResponseWriter, r *http.Request) ([][]entities.MMSData, error) {
-	var (
-		confT        *configs.Root
-		tmpResult    []entities.MMSData
-		result       []entities.MMSData
-		sortedResult [][]entities.MMSData
-	)
-
-	cfg, err := config.GetConfig()
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return nil, err
-	}
-	json.Unmarshal(cfg, &confT)
-	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTPService.Port, confT.HTTPService.Mms)
-
-	res, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("error parse %s: %v", url, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return [][]entities.MMSData{}, nil
-	}
-	//	w.WriteHeader(200)
-	rr, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Printf("error on response body for MMS service: %v", err)
-		return [][]entities.MMSData{}, nil
-	}
-
-	if err := json.Unmarshal(rr, &tmpResult); err != nil {
-		fmt.Printf("error on decoding JSON response for MMS service: %s", err)
-		return [][]entities.MMSData{}, nil
-	}
-	for i := 0; i < len(tmpResult); i++ {
-		if pkg.IsValidCountryCode(tmpResult[i].Country) && pkg.IsValidProvider(tmpResult[i].Provider) {
-			result = append(result, tmpResult[i])
-		} else {
-			fmt.Println("something wrong... ", tmpResult[i].Country, ", or", tmpResult[i].Provider, " not valid")
-		}
-	}
-	sortedResult = append(sortedResult, result)
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Country < result[j].Country
-	})
-
-	resultCopy := append([]entities.MMSData(nil), result...)
-	sort.Slice(resultCopy, func(i, j int) bool {
-		return resultCopy[i].Provider < resultCopy[j].Provider
-	})
-	sortedResult = append(sortedResult, resultCopy)
-
-	for i := 0; i < len(sortedResult); i++ {
-		for j := 0; j < len(sortedResult[i]); j++ {
-			sortedResult[i][j].Country = pkg.CodeToName(sortedResult[i][j].Country)
-		}
-	}
-
-	return sortedResult, nil
-}
-
-// GetSupportServiceData  collects support data.
-func GetSupportServiceData(w http.ResponseWriter, r *http.Request) ([]int, error) {
-	var (
-		confT  configs.Root
-		result []entities.SupportData
-		report []int
-	)
-
-	cfg, err := config.GetConfig()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return nil, err
-	}
-	json.Unmarshal(cfg, &confT)
-	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTPService.Port, confT.HTTPService.Support)
-
-	res, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("error parse url: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return []int{}, nil
-	}
-
-	resu, err := io.ReadAll(res.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("error on response body for support service: %v", err)
-		return []int{}, nil
-	}
-	if err := json.Unmarshal(resu, &result); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("error on decoding JSON response for support service: %s", err)
-		return []int{}, nil
-	}
-
-	allTickets := 0
-	for i := 0; i < len(result); i++ {
-		allTickets += result[i].ActiveTickets
-	}
-
-	timeChank := 60 / 18
-
-	supportLoading := 1
-	if allTickets <= 16.0 && allTickets > 8.0 {
-		supportLoading = 2
-	} else if allTickets > 16.0 {
-		supportLoading = 3
-	}
-	report = []int{supportLoading, allTickets * timeChank}
-
-	return report, nil
-}
-
-// GetIncidentData  collects incidents data.
-func GetIncidentData(w http.ResponseWriter, r *http.Request) ([]entities.IncidentData, error) {
-	//return nil, fmt.Errorf("incident handler %s", "test error")
-	var (
-		confT  configs.Root
-		result []entities.IncidentData
-	)
-
-	cfg, err := config.GetConfig()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return nil, err
-	}
-	json.Unmarshal(cfg, &confT)
-
-	url := fmt.Sprintf("http://localhost:%d%s", confT.HTTPService.Port, confT.HTTPService.Incident)
-
-	res, err := http.Get(url)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("error parse url: %v", err)
-		return []entities.IncidentData{}, nil //[]IncidentData{}, nil
-	}
-
-	rr, err := io.ReadAll(res.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("error on response body for insident service: %v", err)
-		return []entities.IncidentData{}, nil
-	}
-
-	if err := json.Unmarshal(rr, &result); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("error on decoding JSON response for insident service: %v", err)
-		return []entities.IncidentData{}, nil
-	}
-	//	w.WriteHeader(200)
-	return result, nil
-}
-
-// GetSmsData  collects sms data.
-func GetSmsData(path string) ([][]entities.SMSData, error) {
-	var err error
-	var sms entities.SMSData
-	var result []entities.SMSData
-	var sortedResult [][]entities.SMSData
-
-	csv := pkg.ReadCSV(path)
-	if csv == nil {
-		err = errFileOpen
-		return [][]entities.SMSData{}, nil
-	}
-
-	for _, str := range csv {
-		if len(str) == 4 {
-			if pkg.IsValidCountryCode(str[0]) && pkg.IsValidProvider(str[3]) {
-				sms.Country = str[0]
-				sms.Bandwidth = str[1]
-				sms.ResponseTime = str[2]
-				sms.Provider = str[3]
-
-				result = append(result, sms)
-			}
-		} else {
-			//	fmt.Println("GetSmsData corrupted string", str)
-		}
-	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Country < result[j].Country
-	})
-	resultCopy := append([]entities.SMSData(nil), result...)
-	sort.Slice(resultCopy, func(i, j int) bool {
-		return resultCopy[i].Provider < resultCopy[j].Provider
-	})
-	sortedResult = append(sortedResult, result)
-	sortedResult = append(sortedResult, resultCopy)
-	for i := 0; i < len(sortedResult); i++ {
-		for j := 0; j < len(sortedResult[i]); j++ {
-			sortedResult[i][j].Country = pkg.CodeToName(sortedResult[i][j].Country)
-		}
-	}
-	return sortedResult, err
 }
 
 // GetVoiceService  collects voice data.
@@ -377,7 +182,7 @@ func GetEmailServiceData(path string) ([][]entities.EmailData, error) {
 			resultCopy = append(resultCopy, result[len(result)-4:len(result)-1])
 		}
 	}
-
+	fmt.Println("\nresultCopy", resultCopy)
 	return resultCopy, err
 }
 
