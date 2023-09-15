@@ -69,7 +69,7 @@ func new(fileName string) (Set, error) {
 	for scanner.Scan() {
 		line = scanner.Text()
 
-		if d, err := newFromString(line); err == nil {
+		if d, err := decodeCSV(line); err == nil {
 			result = append(result, d)
 		}
 	}
@@ -77,7 +77,7 @@ func new(fileName string) (Set, error) {
 }
 
 //
-func newFromString(str string) (Data, error) {
+func decodeCSV(str string) (Data, error) {
 	fields := strings.Split(str, ";")
 	if len(fields) != 4 {
 		return Data{}, fmt.Errorf("wrong number of fields: %d", len(fields))

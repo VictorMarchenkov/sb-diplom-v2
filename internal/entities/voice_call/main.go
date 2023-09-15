@@ -1,8 +1,10 @@
 package voice_call
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -11,22 +13,23 @@ import (
 )
 
 type Data struct {
-	Country             string
-	BandWidth           string
-	ResponseTime        string
-	Provider            string
-	ConnectionStability float32
-	Ftfb                int
-	VoicePurity         int
-	MedianOfCallsTime   int
+	Country             string  `json:"country"`
+	BandWidth           string  `json:"bandwidth"`
+	ResponseTime        string  `json:"response_time"`
+	Provider            string  `json:"provider"`
+	ConnectionStability float32 `json:"connection_stability"`
+	Ttfb                int     `json:"ttfb"`
+	VoicePurity         int     `json:"voice_purity"`
+	MedianOfCallsTime   int     `json:"median_of_calls_time"`
 }
 
 func (d *Data) validate() error {
+
 	if len(d.Country) != 2 {
 		return fmt.Errorf("invalid country code length: %v", d.Country)
 	}
 
-	if _, ok := consts.ISOCountries[d.Country]; ok {
+	if _, ok := consts.ISOCountries[d.Country]; !ok {
 		return fmt.Errorf("unknown country code: %v", d.Country)
 	}
 
@@ -57,7 +60,7 @@ func (d *Data) validate() error {
 		return errors.New("wrong type for Median Of Calls Tim")
 	}
 
-	if reflect.ValueOf(d.Ftfb).Type() != reflect.TypeOf(number) {
+	if reflect.ValueOf(d.Ttfb).Type() != reflect.TypeOf(number) {
 		return errors.New("wrong type for ftfb")
 	}
 
@@ -70,8 +73,9 @@ func (d *Data) validate() error {
 
 type Set []Data
 
-func newFromString(str string) (Data, error) {
-	fields := strings.Split(str, ";")
+func decodeCSV(csvStr string) (Data, error) {
+
+	fields := strings.Split(csvStr, ";")
 	if len(fields) != 8 {
 		return Data{}, fmt.Errorf("wrong number of fields: %d", len(fields))
 	}
@@ -93,7 +97,7 @@ func newFromString(str string) (Data, error) {
 	if err != nil {
 		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[5])
 	}
-	result.Ftfb = v5
+	result.Ttfb = v5
 
 	v6, err := strconv.Atoi(fields[6])
 	if err != nil {
@@ -114,23 +118,36 @@ func newFromString(str string) (Data, error) {
 	return result, nil
 }
 
-//func NewFromFile(fileName string) (Records, error) {
-//	file, err := os.Open(fileName)
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer file.Close()
-//
-//	var result Records
-//	var line string
-//
-//	scanner := bufio.NewScanner(file)
-//	for scanner.Scan() {
-//		line = scanner.Text()
-//		if d, err := newFromString(line); err == nil {
-//			result = append(result, d)
-//		}
-//	}
-//
-//	return result, nil
-//}
+func new(fileName string) (Set, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var result Set
+	var line string
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line = scanner.Text()
+
+		if d, err := decodeCSV(line); err == nil {
+			if err := d.validate(); err != nil {
+				return nil, err
+			}
+			result = append(result, d)
+		}
+	}
+
+	return result, nil
+}
+
+func Result(fileName string) (Set, error) {
+	result, err := new(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

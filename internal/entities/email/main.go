@@ -47,7 +47,7 @@ func (d *Data) validate() error {
 
 type Set []Data
 
-func newFromString(str string) (Data, error) {
+func decodeCSV(str string) (Data, error) {
 	fields := strings.Split(str, ";")
 	if len(fields) != 3 {
 		return Data{}, fmt.Errorf("wrong number of fields: %d", len(fields))
@@ -84,7 +84,7 @@ func new(fileName string) (Set, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line = scanner.Text()
-		if d, err := newFromString(line); err == nil {
+		if d, err := decodeCSV(line); err == nil {
 			result = append(result, d)
 		}
 	}
@@ -112,16 +112,7 @@ func SortedResult(fileName string) (map[string][]Set, error) {
 		sort.Slice(preFinal[country], func(i, j int) bool {
 			return int(s[i].DeliveryTime) < int(s[j].DeliveryTime)
 		})
-		/*
-			if len(result) == 1 {
-				resultCopy = append(resultCopy, result[0:1])
-			} else {
-				resultCopy = append(resultCopy, result[0:3])
-				if len(result) > 3 {
-					resultCopy = append(resultCopy, result[len(result)-4:len(result)-1])
-				}
-			}
-		*/
+
 		final[country] = append(final[country], preFinal[country][0:3])
 		final[country] = append(final[country], preFinal[country][len(preFinal[country])-4:len(preFinal[country])-1])
 	}
