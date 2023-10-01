@@ -1,28 +1,25 @@
 package billing
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strconv"
 )
 
 type Data struct {
-	CreateCustomer bool
-	Purchase       bool
-	Payout         bool
-	Recurring      bool
-	FraudControl   bool
-	CheckoutPage   bool
+	CreateCustomer bool `json:"create_customer"`
+	Purchase       bool `json:"purchase"`
+	Payout         bool `json:"payout"`
+	Recurring      bool `json:"recurring"`
+	FraudControl   bool `json:"fraud_control"`
+	CheckoutPage   bool `json:"checkout_page"`
 }
 
 func (d *Data) validate() error {
 	return nil
 }
 
-type Records []Data
-
-func newFromString(str string) (Data, error) {
+func decodeCSV(str string) (Data, error) {
 
 	result := Data{}
 
@@ -35,7 +32,6 @@ func newFromString(str string) (Data, error) {
 		return result, fmt.Errorf("decoding of the string %v", err)
 	}
 
-	d, err = strconv.ParseInt(str, 2, 32)
 	result.CreateCustomer = d&(1<<uint(0)) != 0
 	result.Purchase = d&(1<<uint(1)) != 0
 	result.Payout = d&(1<<uint(2)) != 0
@@ -46,21 +42,16 @@ func newFromString(str string) (Data, error) {
 	return result, nil
 }
 
-func NewFromFile(fileName string) (Records, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+func Result(fileName string) (Data, error) {
+	var result Data
 
-	var result Records
-	var line string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line = scanner.Text()
-		if d, err := newFromString(line); err == nil {
-			result = append(result, d)
-		}
+	file, err := os.ReadFile(fileName)
+	if err != nil {
+		return result, err
+	}
+	result, err = decodeCSV(string(file))
+	if err != nil {
+		return result, err
 	}
 
 	return result, nil

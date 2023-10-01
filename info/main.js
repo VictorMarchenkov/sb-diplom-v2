@@ -135,40 +135,52 @@
 
     let renderEmailCharts = function(data){
         let container = document.querySelector('.charts');
+        let tab = document.createElement("table")
+        let keys_ = Object.keys(data)
+        for (let i = 0; i < keys_.length; i++) {
+            let tr = document.createElement("tr")
+            data[keys_[i]].forEach((item) => {
+                let td = document.createElement("td")
+                tr.appendChild(td)
+                let labels = [];
+                let values = [];
 
-        data.forEach((item) => {
-            let labels = [];
-            let values = [];
-            item.forEach((sector) => {
-                labels.push(sector.provider + " (" + sector.country + ")");
-                values.push(sector.delivery_time);
-            });
-
-            let canvas = document.createElement('canvas');
-            let ctx = canvas.getContext('2d');
-            let chart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    'labels': labels,
-                    'datasets': [
-                        {
-                            'label': 'Dataset 1',
-                            'data': values,
-                            'backgroundColor': pieColors
-                        }
-                    ]
-                },
-                options: {
-                    responsive: false,
-                    plugins: {
-                        legend: {
-                            position: 'top'
+                item.forEach((sector) => {
+                    labels.push(sector.provider + " (" + sector.country + ")");
+                    values.push(sector.delivery_time);
+                });
+                let div = document.createElement("div")
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        'labels': labels,
+                        'datasets': [
+                            {
+                                'label': 'Dataset 1',
+                                'data': values,
+                                'backgroundColor': pieColors
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
                         }
                     }
-                }
+                });
+                td.appendChild(canvas);
+                tab.appendChild(tr)
+                container.appendChild(tab)
+
+
             });
-            container.appendChild(canvas);
-        });
+        }
+
     };
 
     let handleResponse = async function(response){
