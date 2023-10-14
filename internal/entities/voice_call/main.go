@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -49,32 +48,12 @@ func (d *Data) validate() error {
 		return errors.New("response time width undefined")
 	}
 
-	var number int = 1
-	var floatNumber float32 = 1
-
-	if reflect.ValueOf(d.ConnectionStability).Type() != reflect.TypeOf(floatNumber) {
-		return errors.New("wrong type for Connection Stability")
-	}
-
-	if reflect.ValueOf(d.MedianOfCallsTime).Type() != reflect.TypeOf(number) {
-		return errors.New("wrong type for Median Of Calls Tim")
-	}
-
-	if reflect.ValueOf(d.Ttfb).Type() != reflect.TypeOf(number) {
-		return errors.New("wrong type for ftfb")
-	}
-
-	if reflect.ValueOf(d.VoicePurity).Type() != reflect.TypeOf(number) {
-		return errors.New("wrong type for Voice Purity")
-	}
-
 	return nil
 }
 
 type Set []Data
 
 func decodeCSV(csvStr string) (Data, error) {
-
 	fields := strings.Split(csvStr, ";")
 	if len(fields) != 8 {
 		return Data{}, fmt.Errorf("wrong number of fields: %d", len(fields))
@@ -93,23 +72,20 @@ func decodeCSV(csvStr string) (Data, error) {
 	}
 	result.ConnectionStability = float32(v4)
 
-	v5, err := strconv.Atoi(fields[5])
+	result.Ttfb, err = strconv.Atoi(fields[5])
 	if err != nil {
 		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[5])
 	}
-	result.Ttfb = v5
 
-	v6, err := strconv.Atoi(fields[6])
+	result.VoicePurity, err = strconv.Atoi(fields[6])
 	if err != nil {
 		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[6])
 	}
-	result.VoicePurity = v6
 
-	v7, err := strconv.Atoi(fields[7])
+	result.MedianOfCallsTime, err = strconv.Atoi(fields[7])
 	if err != nil {
 		return Data{}, fmt.Errorf("invalid ttfb: %v", fields[7])
 	}
-	result.MedianOfCallsTime = v7
 
 	if err := result.validate(); err != nil {
 		return Data{}, err
@@ -118,7 +94,7 @@ func decodeCSV(csvStr string) (Data, error) {
 	return result, nil
 }
 
-func new(fileName string) (Set, error) {
+func Result(fileName string) (Set, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -126,27 +102,12 @@ func new(fileName string) (Set, error) {
 	defer file.Close()
 
 	var result Set
-	var line string
-
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line = scanner.Text()
-
-		if d, err := decodeCSV(line); err == nil {
-			if err := d.validate(); err != nil {
-				return nil, err
-			}
+		if d, err := decodeCSV(scanner.Text()); err == nil {
 			result = append(result, d)
+			continue
 		}
-	}
-
-	return result, nil
-}
-
-func Result(fileName string) (Set, error) {
-	result, err := new(fileName)
-	if err != nil {
-		return nil, err
 	}
 
 	return result, nil
